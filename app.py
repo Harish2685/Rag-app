@@ -1,15 +1,3 @@
-"""
-Streamlit UI for the RAG PDF Chatbot.
-
-Run with:
-    streamlit run app.py
-
-Features:
-- Upload one or more PDFs, which get chunked + embedded on the fly
-- Chat interface for asking questions
-- Displays grounded answers with expandable source citations (file, page, snippet, score)
-- Falls back gracefully with "not found" instead of hallucinating
-"""
 
 import os
 import tempfile
@@ -25,9 +13,9 @@ st.set_page_config(page_title="RAG PDF Chatbot", page_icon="📄", layout="wide"
 st.title("📄 RAG PDF Chatbot")
 st.caption("Upload documents, ask questions, get answers grounded in your own content — with citations.")
 
-# --- Session state setup ---
+
 if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []  # list of {"role": "user"/"assistant", "content": ..., "sources": [...]}
+    st.session_state.chat_history = []  
 if "pipeline" not in st.session_state:
     st.session_state.pipeline = None
 if "ingested_files" not in st.session_state:
@@ -41,7 +29,7 @@ def get_pipeline():
     return st.session_state.pipeline
 
 
-# --- Sidebar: upload + status ---
+
 with st.sidebar:
     st.header("📁 Documents")
 
@@ -85,7 +73,7 @@ with st.sidebar:
         st.rerun()
 
 
-# --- Main chat interface ---
+
 pipeline = get_pipeline()
 
 if pipeline is None:

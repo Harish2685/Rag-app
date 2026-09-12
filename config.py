@@ -1,8 +1,4 @@
-"""
-Central configuration for the RAG pipeline.
-Keeping all tunables in one place makes the project easy to explain in interviews
-and easy to experiment with (chunk size, k, model choice, etc.)
-"""
+
 
 import os
 from dotenv import load_dotenv

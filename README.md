@@ -11,15 +11,15 @@ Upload any PDFs (manuals, papers, policy docs, reports), ask questions in plain 
 
  PDF files                 Vector Store (Chroma)              LLM
 ┌───────────┐   chunk    ┌───────────────────────┐  top-k   ┌─────────────┐
-│  data/*.pdf│──────────▶│  embeddings per chunk  │─────────▶│  gpt-4o-mini │──▶ Grounded answer
+│  data/*.pdf│──────────▶│  embeddings per chunk  │─────────▶│NVIDIA NIM model │──▶ Grounded answer
 └───────────┘  + embed   └───────────────────────┘  chunks  └─────────────┘        + sources
 
 ## 🧩 Tech Stack
 
 - LangChain — orchestration (loaders, splitters, prompt chains)
 - ChromaDB — local vector database
-- NVIDIAAPI — embeddings (`text-embedding-3-small`) + generation (`gpt-4o-mini`)
 - Streamlit— chat UI
-- PyPDF— PDF parsing
+- NVIDIA NIM API — embeddings (`nvidia/nemotron-3-embed-1b`) + generation (`meta-llama/Llama-3.2-3b-instruct`)
+
 
 

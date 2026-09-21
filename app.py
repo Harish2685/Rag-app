@@ -1,6 +1,18 @@
 """
-Streamlit UI for RAG Chatbot with Ollama (Free, Local Models)
+Streamlit UI for the RAG PDF Chatbot.
+
+Run with:
+    streamlit run app.py
+
+Features:
+- Upload one or more PDFs, which get chunked + embedded on the fly
+- Chat interface for asking questions
+- Displays grounded answers with expandable source citations (file, page, snippet, score)
+- Falls back gracefully with "not found" instead of hallucinating
 """
+
+import os
+import tempfile
 
 import streamlit as st
 import os
@@ -16,10 +28,12 @@ st.set_page_config(
     layout="wide",
 )
 
-st.title("📚 RAG Chatbot - Ollama Edition")
-st.markdown("Ask questions about your documents! (100% Free, runs locally)")
+st.title("📄 RAG PDF Chatbot")
+st.caption("Upload documents, ask questions, get answers grounded in your own content — with citations.")
 
-# Initialize session state
+# --- Session state setup ---
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []  # list of {"role": "user"/"assistant", "content": ..., "sources": [...]}
 if "pipeline" not in st.session_state:
     with st.spinner("🔧 Initializing RAG Pipeline..."):
         try:
@@ -32,7 +46,7 @@ if "pipeline" not in st.session_state:
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Sidebar
+# --- Sidebar: upload + status ---
 with st.sidebar:
     st.header("⚙️ Settings")
     
@@ -52,16 +66,27 @@ with st.sidebar:
         st.session_state.messages = []
         st.rerun()
 
-# Chat display
-st.markdown("### 💬 Chat")
 
-# Display chat history
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+# --- Main chat interface ---
+pipeline = get_pipeline()
 
-# User input
-user_input = st.chat_input("🤔 Ask a question about your documents...")
+if pipeline is None:
+    st.info("👈 Upload and ingest at least one PDF from the sidebar to get started.")
+else:
+    # Render chat history
+    for msg in st.session_state.chat_history:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+            if msg.get("sources"):
+                with st.expander("📚 Sources"):
+                    for s in msg["sources"]:
+                        st.markdown(
+                            f"**{s['source']}** — page {s['page']} "
+                            f"(relevance: {s['score']})\n\n> {s['snippet']}"
+                        )
+
+    # Chat input
+    question = st.chat_input("Ask a question about your documents...")
 
 if user_input:
     # Add user message to history

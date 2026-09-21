@@ -1,130 +1,137 @@
-<<<<<<< HEAD
-# 📄 RAG PDF Chatbot
+# RAG PDF Chatbot
 
-A Retrieval-Augmented Generation (RAG) chatbot that answers questions **grounded in your own PDF documents** — with source citations — instead of relying on an LLM's raw (and sometimes outdated or hallucinated) knowledge.
+A chatbot that answers questions about your PDF documents. Upload your files and ask questions — the bot finds answers in your documents and shows you exactly where it found them.
 
-Upload any PDFs (manuals, papers, policy docs, reports), ask questions in plain English, and get answers backed by the exact source page and snippet they came from.
 
----
 
-## 🧠 How it works
+## How It Works
 
-```
- PDF files                 Vector Store (Chroma)              LLM
-┌───────────┐   chunk    ┌───────────────────────┐  top-k   ┌─────────────┐
-│  data/*.pdf│──────────▶│  embeddings per chunk  │─────────▶│  gpt-4o-mini │──▶ Grounded answer
-└───────────┘  + embed   └───────────────────────┘  chunks  └─────────────┘        + sources
-```
+1. Upload PDF files
+2. The system reads and splits them into chunks
+3. Chunks are converted to embeddings and stored in a database
+4. When you ask a question, the system finds relevant chunks and sends them to an LLM
+5. The LLM answers based ONLY on those chunks
+6. You get the answer + the exact source
 
-1. **Ingest** — PDFs are loaded, split into overlapping text chunks, and embedded using OpenAI embeddings.
-2. **Store** — Chunks + embeddings are persisted in a local **ChromaDB** vector store.
-3. **Retrieve** — When a user asks a question, it's embedded and compared against stored chunks via similarity search (top-k).
-4. **Generate** — The retrieved chunks are injected into a prompt that instructs the LLM to answer *only* from that context.
-5. **Cite** — The UI shows which document/page/snippet backed each answer, and a relevance score.
-6. **Guardrail** — If no chunk is relevant enough (below a similarity threshold), the bot says so instead of guessing.
+## What You Need
 
----
+- Python 3.8+
+- Ollama (free, from https://ollama.ai)
+- At least 4GB RAM
 
-## 📁 Project Structure
+## Setup
 
-```
-rag-pdf-chatbot/
-├── app.py              # Streamlit UI — chat interface, file upload, source display
-├── ingest.py           # Document loading, chunking, embedding, vector store creation
-├── rag_chain.py         # Core RAG logic: retrieval + prompt + generation (RAGPipeline class)
-├── config.py            # All tunable settings (chunk size, top-k, models, prompt template)
-├── requirements.txt      # Python dependencies
-├── .env.example          # Template for your OpenAI API key
-├── data/                 # Put source PDFs here for batch ingestion (optional)
-└── chroma_db/            # Auto-created persistent vector store (git-ignored)
-```
+### 1. Install Ollama
+Download from https://ollama.ai and install.
 
----
-
-## 🚀 Setup
-
-### 1. Clone and install dependencies
+### 2. Clone and Setup
 ```bash
-git clone <your-repo-url>
 cd rag-pdf-chatbot
 python -m venv venv
-source venv/bin/activate    # Windows: venv\Scripts\activate
+venv\Scripts\activate  # Windows
+source venv/bin/activate  # Mac/Linux
 pip install -r requirements.txt
 ```
 
-### 2. Add your OpenAI API key
+### 3. Start Ollama
 ```bash
-cp .env.example .env
-# then edit .env and paste your key:
-# OPENAI_API_KEY=sk-...
+ollama serve
 ```
 
-### 3. Run it
-
-**Option A — Use the UI (recommended):**
+### 4. Download Models
+In another terminal:
 ```bash
-streamlit run app.py
+ollama pull nomic-embed-text
+ollama pull mistral
 ```
-Then upload PDFs directly from the sidebar and start chatting.
 
-**Option B — Batch-ingest PDFs from a folder first:**
+### 5. Add Your PDFs
+Create a `data/` folder and add your PDF files.
+
+### 6. Prepare Data
 ```bash
-# Drop PDFs into the data/ folder, then:
 python ingest.py
-# Then launch the chat UI:
+```
+
+### 7. Run the App
+```bash
 streamlit run app.py
 ```
 
-**Option C — Quick CLI test (no UI):**
-```bash
-python rag_chain.py
+Open http://localhost:8501 in your browser.
+
+## How to Use
+
+1. Type your question in the chat
+2. The bot searches your documents
+3. You get an answer with sources
+
+Example questions:
+- "What does this document say about X?"
+- "How do I do Y according to the manual?"
+- "Find the section about Z"
+
+## Tech Stack
+
+- **LangChain** - connects everything together
+- **ChromaDB** - stores document embeddings locally
+- **Ollama** - runs AI models on your computer (free)
+- **Streamlit** - simple web interface
+
+## Models Used
+
+- **Embedding**: `nomic-embed-text` (converts text to numbers for searching)
+- **LLM**: `mistral` (answers questions)
+
+Both run locally, no internet needed after first download.
+
+## Change Models
+
+Edit `config.py`:
+
+```python
+# Faster (2-5 seconds)
+LLM_MODEL = "phi"
+
+# Balanced (5-10 seconds)  
+LLM_MODEL = "mistral"
+
+# Better quality (slower)
+LLM_MODEL = "neural-chat"
 ```
 
----
+Download the model:
+```bash
+ollama pull mistral
+```
 
-## ⚙️ Configuration
 
-All key parameters live in `config.py`:
+## Common Issues
 
-| Setting | Purpose | Default |
-|---|---|---|
-| `CHUNK_SIZE` / `CHUNK_OVERLAP` | Controls how documents are split | 1000 / 150 |
-| `EMBEDDING_MODEL` | OpenAI embedding model | `text-embedding-3-small` |
-| `TOP_K` | Number of chunks retrieved per query | 4 |
-| `SIMILARITY_SCORE_THRESHOLD` | Minimum relevance to trust a chunk | 0.3 |
-| `LLM_MODEL` | Generation model | `gpt-4o-mini` |
-| `TEMPERATURE` | Generation randomness | 0.0 (deterministic) |
+**"Connection refused"**
+- Make sure `ollama serve` is running in another terminal
 
----
+**"Out of memory"**
+- Use a smaller model: `phi` or `neural-chat`
 
-## 🧩 Tech Stack
+**Slow responses**
+- Normal for first response. Subsequent ones are faster.
+- Use a smaller model if too slow
 
-- **LangChain** — orchestration (loaders, splitters, prompt chains)
-- **ChromaDB** — local vector database
-- **OpenAI API** — embeddings (`text-embedding-3-small`) + generation (`gpt-4o-mini`)
-- **Streamlit** — chat UI
-- **PyPDF** — PDF parsing
+**"Vector store not found"**
+- Run `python ingest.py` to process your PDFs
 
----
+## Tips
 
-## 🔮 Possible extensions (good talking points for interviews)
+- The bot only uses information from your documents
+- It won't make things up (unlike ChatGPT)
+- Source citations show you exactly where answers come from
+- Add more PDFs anytime and run `ingest.py` again
 
-- Swap OpenAI embeddings for a free local model (`sentence-transformers/all-MiniLM-L6-v2`) to run fully offline
-- Add conversational memory (multi-turn follow-up questions using chat history in the retriever)
-- Support more file types (docx, txt, HTML) via `unstructured`
-- Add a reranker (e.g., Cohere rerank or cross-encoder) after initial retrieval for higher precision
-- Swap Chroma for a production vector DB (Pinecone, Weaviate, pgvector) for scale
-- Add evaluation: track retrieval precision/recall and hallucination rate over a test question set
-- Deploy via Docker + host on Streamlit Community Cloud / Render / AWS
+## No Costs
+
+Everything runs on your machine. No API keys, no subscriptions, no fees.
 
 ---
 
-## 📝 Notes
-
-- The vector store persists to disk (`chroma_db/`), so you don't need to re-embed documents every run — only when you add new files.
-- The system prompt explicitly forbids the LLM from answering outside the provided context, which is the core "anti-hallucination" mechanism of RAG.
-- Relevance scores shown in the UI let you sanity-check *why* the bot answered the way it did — useful for debugging and for demoing to reviewers/interviewers.
-=======
-# Rag-app
-Built a Retrieval-Augmented Generation (RAG) pipeline that grounds LLM responses in user-supplied documents, reducing hallucination risk through similarity-thresholded retrieval and citation-backed answers — using LangChain, ChromaDB, and NVIDIA NIM.
->>>>>>> 4cdb238d942a12602a7b3455af61f46045256824
+Built with LangChain, ChromaDB, Ollama, and Streamlit.

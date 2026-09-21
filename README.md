@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 📄 RAG PDF Chatbot
 
 A Retrieval-Augmented Generation (RAG) chatbot that answers questions **grounded in your own PDF documents** — with source citations — instead of relying on an LLM's raw (and sometimes outdated or hallucinated) knowledge.
@@ -123,3 +124,7 @@ All key parameters live in `config.py`:
 - The vector store persists to disk (`chroma_db/`), so you don't need to re-embed documents every run — only when you add new files.
 - The system prompt explicitly forbids the LLM from answering outside the provided context, which is the core "anti-hallucination" mechanism of RAG.
 - Relevance scores shown in the UI let you sanity-check *why* the bot answered the way it did — useful for debugging and for demoing to reviewers/interviewers.
+=======
+# Rag-app
+Built a Retrieval-Augmented Generation (RAG) pipeline that grounds LLM responses in user-supplied documents, reducing hallucination risk through similarity-thresholded retrieval and citation-backed answers — using LangChain, ChromaDB, and NVIDIA NIM.
+>>>>>>> 4cdb238d942a12602a7b3455af61f46045256824
